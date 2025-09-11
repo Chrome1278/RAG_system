@@ -1,8 +1,8 @@
 import pandas as pd
 from transformers import pipeline
+from sentence_transformers import CrossEncoder
 
 from src.search_engine import SearchIndex
-
 
 SYSTEM_PROMPT = """Answer the question based only on the following information in the 'Context' section which contains a description of the films.
     If the text does not answer the question from the context, say: 'I do not have enough information to answer the question.'
@@ -19,14 +19,28 @@ class AnswerGenerator:
             encoder_model='all-mpnet-base-v2',
         )
         self.movies_df = pd.read_csv('./data/movies_data.csv')
+        self.rerank_model = CrossEncoder('BAAI/bge-reranker-base', trust_remote_code=True)
 
+    def rerank_chunks(self, query: str, chunks: list, top_n: int = 5) -> list:
 
-    def generate_movie_answer(self, question, context_chunks):
-        finded_movies = []
-        for i, chunk in enumerate(context_chunks):
+        pairs = [[query, chunk['chunk']] for chunk in chunks]
+
+        scores = self.rerank_model.predict(pairs)
+
+        for i, score in enumerate(scores):
+            chunks[i]['rerank_score'] = score
+
+        reranked_chunks = sorted(chunks, key=lambda x: x['rerank_score'], reverse=True)
+        reranked_chunks = reranked_chunks[:top_n]
+
+        return reranked_chunks
+
+    def generate_movie_answer(self, question: str, chunks: list):
+        founded_movies = []
+        for i, chunk in enumerate(chunks):
             movie_info = self.movies_df['movie_text'].iloc[chunk['source_index']]
-            finded_movies.append(f"## Info about a movie number {i+1}.\n{movie_info}")
-        movies_context = '\n'.join(finded_movies)
+            founded_movies.append(f"### Info about a founded movie.\n{movie_info}")
+        movies_context = '\n'.join(founded_movies)
 
         user_prompt = f"""
         # Context:
@@ -43,10 +57,10 @@ class AnswerGenerator:
 
         return answer, movies_context
 
-
     def __call__(self, query: str):
-        context_chunks = self.search_index.search_by_query(query, top_k=3)
-        result, founded_movies = self.generate_movie_answer(query, context_chunks)
+        context_chunks = self.search_index.search_by_query(query, top_k=10)
+        reranked_best_chunks = self.rerank_chunks(query, context_chunks, top_n=1)
+        result, founded_movies = self.generate_movie_answer(query, reranked_best_chunks)
 
         return result, founded_movies
 

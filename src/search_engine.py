@@ -14,13 +14,11 @@ class SearchIndex:
 
         self.model = SentenceTransformer(encoder_model)
 
-
     def search_by_query(self, query, top_k=3):
         query_embedding = self.model.encode([query])
         distances, indices = self.index.search(query_embedding, top_k)
-
         results = []
-        unique_indices = set()  # Множество для отслеживания уже добавленных source_index
+        unique_indices = set()
 
         for i in range(len(indices[0])):
             source_idx = self.source_chunk_indexes[indices[0][i]]
@@ -49,7 +47,7 @@ if __name__ == "__main__":
         top_k=5
     )
     for i, result in enumerate(results):
-        print(f"\nResult {i+1}:")
+        print(f"\nResult {i + 1}:")
         print(f"INDEX: {result['source_index']}")
         print(f"Relevance: {result['score']:.3f}")
         print(f"Content:\n {result['chunk']}...")

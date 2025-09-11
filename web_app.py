@@ -41,7 +41,7 @@ if selected_model_name:
             "What is the plot in the movie The Royal Tenenbaums from 2001?",
             "What was the name of the comedy movie with Dan Aykroyd and Tom Hanks in cast? It was released in 1987.",
             "A war veteran is able to travel 15 years into the future and stay there for a short time. "
-            "Write out in detail everything you know about this movie.",
+            "Write out everything you know about this movie.",
         )
 
         text_template = st.selectbox(
