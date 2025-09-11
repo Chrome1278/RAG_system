@@ -5,8 +5,7 @@ import faiss
 
 class SearchIndex:
 
-    def __init__(self, chunks_path: str, index_path: str,
-                 encoder_model: str = "multi-qa-mpnet-base-dot-v1"):
+    def __init__(self, chunks_path: str, index_path: str, encoder_model: str):
         self.index = faiss.read_index(index_path)
         with open(chunks_path, 'rb') as f:
             chunks_metadata = pickle.load(f)
@@ -15,12 +14,9 @@ class SearchIndex:
 
         self.model = SentenceTransformer(encoder_model)
 
-    def search_by_query(self, query, top_k=3):
-        """
-        Поиск фильмов с возможностью фильтрации по году и жанру
-        """
-        query_embedding = self.model.encode([query])
 
+    def search_by_query(self, query, top_k=3):
+        query_embedding = self.model.encode([query])
         distances, indices = self.index.search(query_embedding, top_k)
 
         results = []
@@ -39,17 +35,14 @@ class SearchIndex:
             })
             unique_indices.add(source_idx)
 
-            if len(results) >= top_k:
-                break
+        return results
 
-        return results[:top_k]
-
-# Тестирование поиска
 
 if __name__ == "__main__":
     search_index = SearchIndex(
         chunks_path='./data/chunks_metadata.pkl',
-        index_path='./data/movies_info.index'
+        index_path='./data/movies_info.index',
+        encoder_model='all-mpnet-base-v2'
     )
     results = search_index.search_by_query(
         "Daniel Boone daughter befriends an Indian maiden",
