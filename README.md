@@ -17,10 +17,11 @@
 ```
 pip install -r ./requirements.txt 
 ```
-2. Формирование базы индексов movies_info.index (если её нет) через _notebooks/data_chunking.ipynb_
+2. Формирование базы индексов _movies_info.index_ и сохранение методанных _chunks_metadata.pkl_ (если их нет) через _notebooks/data_chunking.ipynb_
 
 
 3. Запуск веб-интерфейса:
 ```
 streamlit run web_app.py
 ```
+*_В веб-интерфейсе при первоначальной инициализации выбранной LLM производится её скачивание, дождитесь окончания скачивания в логах консоли._
